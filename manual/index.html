@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <style>
+        body {
+            background: #111;
+            color: white;
+            font-family: Arial;
+            text-align: center;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 {
+            margin-bottom: 30px;
+        }
+
+        .slider {
+            width: 95%;
+            height: 60px;
+        }
+
+        .value {
+            font-size: 32px;
+            margin-top: 10px;
+            margin-bottom: 30px;
+        }
+
+        .steering {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 20px;
+            margin-bottom: 40px;
+        }
+
+        .steering button {
+            width: 140px;
+            height: 140px;
+            font-size: 60px;
+            border-radius: 20px;
+            border: none;
+        }
+
+        .stop-btn {
+            width: 250px;
+            height: 100px;
+            font-size: 32px;
+            background: red;
+            color: white;
+            border: none;
+            border-radius: 15px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>RC Car Controller</h1>
+
+    <h2>Throttle</h2>
+
+    <input id="throttle" class="slider" type="range" min="-100" max="100" value="0">
+
+    <div id="throttleVal" class="value">0</div>
+
+    <h2>Steering</h2>
+
+    <div class="steering">
+
+        <button id="leftBtn">
+            ←
+        </button>
+
+        <button id="rightBtn">
+            →
+        </button>
+
+    </div>
+
+    <button class="stop-btn" onclick="stopCar()">
+        STOP
+    </button>
+
+    <script>
+
+        const throttle = document.getElementById("throttle");
+        const throttleVal = document.getElementById("throttleVal");
+
+        let steeringValue = 0;
+
+        function sendControl() {
+
+            throttleVal.innerText = throttle.value;
+
+            fetch("/control", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    throttle: Number(throttle.value),
+                    steering: steeringValue
+                })
+            });
+        }
+
+        throttle.addEventListener("input", sendControl);
+
+        function steerLeftStart() {
+            steeringValue = -100;
+            sendControl();
+        }
+
+        function steerRightStart() {
+            steeringValue = 100;
+            sendControl();
+        }
+
+        function steerStop() {
+            steeringValue = 0;
+            sendControl();
+        }
+
+        const leftBtn = document.getElementById("leftBtn");
+        const rightBtn = document.getElementById("rightBtn");
+
+        leftBtn.addEventListener("mousedown", steerLeftStart);
+        leftBtn.addEventListener("mouseup", steerStop);
+        leftBtn.addEventListener("mouseleave", steerStop);
+
+        leftBtn.addEventListener("touchstart", (e) => {
+            e.preventDefault();
+            steerLeftStart();
+        });
+
+        leftBtn.addEventListener("touchend", (e) => {
+            e.preventDefault();
+            steerStop();
+        });
+
+        rightBtn.addEventListener("mousedown", steerRightStart);
+        rightBtn.addEventListener("mouseup", steerStop);
+        rightBtn.addEventListener("mouseleave", steerStop);
+
+        rightBtn.addEventListener("touchstart", (e) => {
+            e.preventDefault();
+            steerRightStart();
+        });
+
+        rightBtn.addEventListener("touchend", (e) => {
+            e.preventDefault();
+            steerStop();
+        });
+
+        function stopCar() {
+
+            throttle.value = 0;
+            throttleVal.innerText = "0";
+
+            steeringValue = 0;
+
+            fetch("/stop", {
+                method: "POST"
+            });
+        }
+
+    </script>
+
+</body>
+
+</html>
